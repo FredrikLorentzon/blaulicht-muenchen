@@ -1,0 +1,9 @@
+[project]
+name = "blaulicht-muenchen"
+version = "0.1.0"
+description = "Local server for the Blaulicht München multi-agent ambulance dispatch demo"
+requires-python = ">=3.10"
+dependencies = [
+    "anthropic",
+    "python-dotenv>=1.2.4",
+]

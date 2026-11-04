@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="claude:viewport-fit-sides" content="cover">
+  <title>Blaulicht München</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@500;600&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700;6..12,800&display=swap">
+  <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/map.css">
+  <link rel="stylesheet" href="css/drag.css">
+</head>
+<body>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round">
+            <path d="M7 15.5a5 5 0 0 1 10 0z" fill="#fff" stroke="none"/>
+            <rect x="5" y="15.5" width="14" height="3.2" rx="1.2" fill="#fff" stroke="none"/>
+            <path d="M12 4.2v2.2M5.4 7l1.5 1.5M18.6 7l-1.5 1.5M3.4 12.6h2M18.6 12.6h2"/>
+          </svg>
+        </span>
+        <div class="brand-text">
+          <h1>Blaulicht München</h1>
+          <p>Multi-agent ambulance dispatch</p>
+        </div>
+        <span class="model-badge" id="modelBadge" role="status" title="Agents run on rules">⚙️ Rules</span>
+      </div>
+
+      <div class="clock-group">
+        <div class="clock">
+          <span class="clock-time" id="clockTime">Tue 07:35</span>
+          <span class="phase-chip" id="phaseChip">Morning rush</span>
+        </div>
+        <label class="visually-hidden" for="jumpSelect">Jump to a time of day</label>
+        <select class="jump-select" id="jumpSelect">
+          <option value="" selected>Jump to</option>
+          <option value="03:00">03:00</option>
+          <option value="07:30">07:30</option>
+          <option value="12:30">12:30</option>
+          <option value="17:15">17:15</option>
+          <option value="22:00">22:00</option>
+        </select>
+      </div>
+
+      <div class="segmented speed-control" id="speedControl" role="group" aria-label="Simulation speed">
+        <button type="button" class="seg-btn seg-icon" data-speed="pause" aria-pressed="false" aria-label="Pause">
+          <svg class="icon-pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="2.8" height="10" rx="1"/><rect x="9.2" y="3" width="2.8" height="10" rx="1"/></svg>
+          <svg class="icon-play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6a.8.8 0 0 0 1.2.7l7.4-4.8a.8.8 0 0 0 0-1.4L6.2 2.5A.8.8 0 0 0 5 3.2z"/></svg>
+        </button>
+        <button type="button" class="seg-btn" data-speed="1" aria-pressed="true">1×</button>
+        <button type="button" class="seg-btn" data-speed="2" aria-pressed="false">2×</button>
+        <button type="button" class="seg-btn" data-speed="4" aria-pressed="false">4×</button>
+        <button type="button" class="seg-btn" data-speed="8" aria-pressed="false">8×</button>
+      </div>
+
+      <div class="scenarios" role="group" aria-label="Scenarios">
+        <div class="scenario-picker">
+          <button type="button" class="chip-toggle scenario-button" id="scenarioButton" aria-haspopup="dialog" aria-expanded="false" aria-controls="scenarioPopover">
+            <span class="scenario-caption">Scenario</span><span aria-hidden="true" id="scenarioIcon"></span><span id="scenarioName">Normal day</span>
+          </button>
+          <div class="popover scenario-popover" id="scenarioPopover" role="dialog" aria-label="Choose a scenario" hidden>
+            <p class="popover-title">Choose a scenario</p>
+            <div class="scenario-list" id="scenarioList"></div>
+          </div>
+        </div>
+        <button type="button" class="chip-toggle chip-icon" id="snowToggle" aria-pressed="false" title="Snowfall" aria-label="Snowfall"><span aria-hidden="true">❄️</span></button>
+        <button type="button" class="chip-toggle chip-action chip-icon" id="crashButton" title="Crash on the Ring" aria-label="Crash on the Ring"><span aria-hidden="true">💥</span></button>
+      </div>
+
+      <button type="button" class="switch" id="autoApproveSwitch" role="switch" aria-checked="true">
+        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        <span class="switch-label">Auto-approve</span>
+      </button>
+
+      <div class="emergency">
+        <button type="button" class="btn-emergency" id="emergencyButton" aria-haspopup="dialog" aria-expanded="false" aria-controls="emergencyPopover">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 15.5a5 5 0 0 1 10 0z" fill="currentColor"/><rect x="5" y="15.5" width="14" height="3.2" rx="1.2" fill="currentColor"/><path d="M12 4.2v2.2M5.4 7l1.5 1.5M18.6 7l-1.5 1.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          New emergency
+          <kbd>N</kbd>
+        </button>
+        <div class="popover" id="emergencyPopover" role="dialog" aria-label="Choose an emergency" hidden>
+          <p class="popover-title">What is the emergency?</p>
+          <div class="case-grid" id="caseGrid"></div>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="map-card" aria-label="Map of Munich">
+        <div class="map-stage" id="mapStage">
+          <svg id="map" role="img" aria-label="Live map of ambulances, calls and hospitals in Munich"></svg>
+
+          <div class="traffic-control" role="group" aria-label="Traffic layer">
+            <span class="overlay-label">Traffic</span>
+            <div class="segmented segmented-small">
+              <button type="button" class="seg-btn" data-traffic="off" aria-pressed="false">Off</button>
+              <button type="button" class="seg-btn" data-traffic="live" aria-pressed="true">Live</button>
+              <button type="button" class="seg-btn" data-traffic="forecast" aria-pressed="false">In 15 min</button>
+            </div>
+          </div>
+
+          <div class="map-top">
+            <div class="placing-banner" id="placingBanner" hidden>
+              <span class="placing-pulse" aria-hidden="true"></span>
+              <span class="placing-text" id="placingText">Click the map to place</span>
+              <button type="button" class="btn-small" id="placeRandomButton">Random location</button>
+              <button type="button" class="btn-small btn-quiet" id="placeCancelButton">Cancel</button>
+            </div>
+            <div class="toasts" id="toasts" aria-live="polite"></div>
+          </div>
+
+          <details class="legend" id="legend" open>
+            <summary>Legend</summary>
+            <div class="legend-body">
+              <p class="legend-title">Priority</p>
+              <ul class="legend-list">
+                <li><span class="swatch swatch-dot" style="--c: var(--p-red)"></span>Immediate</li>
+                <li><span class="swatch swatch-dot" style="--c: var(--p-orange)"></span>Very urgent</li>
+                <li><span class="swatch swatch-dot" style="--c: var(--p-yellow)"></span>Urgent</li>
+                <li><span class="swatch swatch-dot" style="--c: var(--p-green)"></span>Standard</li>
+              </ul>
+              <p class="legend-title">Units</p>
+              <ul class="legend-list">
+                <li><span class="swatch" style="--c: var(--s-idle)"></span>Free</li>
+                <li><span class="swatch" style="--c: var(--s-scene)"></span>To scene</li>
+                <li><span class="swatch" style="--c: var(--s-onscene)"></span>On scene</li>
+                <li><span class="swatch" style="--c: var(--s-hosp)"></span>To hospital</li>
+                <li><span class="swatch" style="--c: var(--s-hand)"></span>Handover</li>
+                <li><span class="swatch" style="--c: var(--s-return)"></span>Returning</li>
+              </ul>
+            </div>
+          </details>
+        </div>
+
+        <div class="kpi-strip" aria-label="Key figures">
+          <div class="kpi"><span class="kpi-label" title="Open calls" aria-label="Open calls">📞</span><span class="kpi-value" id="kpiOpen">0</span></div>
+          <div class="kpi"><span class="kpi-label" title="Free units" aria-label="Free units">🚑</span><span class="kpi-value" id="kpiFree">8/8</span></div>
+          <div class="kpi"><span class="kpi-label" title="Average response time" aria-label="Average response time">⏱️</span><span class="kpi-value" id="kpiResponse">No data</span></div>
+          <div class="kpi"><span class="kpi-label" title="Responses on target" aria-label="Responses on target">🎯</span><span class="kpi-value" id="kpiTarget">No data</span></div>
+          <div class="kpi kpi-traffic">
+            <span class="kpi-label" title="Traffic index and 60 minute forecast" aria-label="Traffic index">🚦</span>
+            <span class="kpi-value"><span id="kpiTraffic">×1.0</span><svg class="sparkline" id="kpiSparkline" viewBox="0 0 56 20" aria-hidden="true"><path d=""/></svg></span>
+            <span class="kpi-trend" id="kpiTrend">steady</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="sidebar" aria-label="Control room">
+        <section class="card network-card" aria-labelledby="networkTitle">
+          <header class="card-head">
+            <h2 id="networkTitle">Agent network</h2>
+            <span class="live-badge" id="liveBadge">Live</span>
+          </header>
+          <svg class="network" id="network" viewBox="0 0 372 152" role="img" aria-label="Intake, triage agent and traffic agent report to the coordinator, which recommends to you"></svg>
+        </section>
+
+        <section class="card rec-card" id="recCard" aria-labelledby="recTitle">
+          <header class="card-head">
+            <h2 id="recTitle"><span class="agent-dot" style="--c: var(--a-coord)"></span>Recommendation</h2>
+            <span class="more-chip" id="recMore" hidden></span>
+          </header>
+          <div class="rec-body" id="recBody"></div>
+          <div class="rec-stamp" id="recStamp" aria-live="assertive"></div>
+          <div class="countdown-track" id="countdownTrack" aria-hidden="true"><span class="countdown-fill" id="countdownFill"></span></div>
+        </section>
+
+        <section class="card tabs-card">
+          <div class="tablist" role="tablist" aria-label="Control room views">
+            <button type="button" class="tab" role="tab" id="tab-chat" aria-controls="panel-chat" aria-selected="true">Agent chat</button>
+            <button type="button" class="tab" role="tab" id="tab-calls" aria-controls="panel-calls" aria-selected="false" tabindex="-1">Calls <span class="tab-count" id="callsCount">0</span></button>
+            <button type="button" class="tab" role="tab" id="tab-fleet" aria-controls="panel-fleet" aria-selected="false" tabindex="-1">Fleet</button>
+            <button type="button" class="tab" role="tab" id="tab-hospitals" aria-controls="panel-hospitals" aria-selected="false" tabindex="-1">Hospitals</button>
+          </div>
+
+          <div class="tabpanel panel-chat" role="tabpanel" id="panel-chat" aria-labelledby="tab-chat">
+            <ol class="chat-log" id="chatLog" aria-live="polite"></ol>
+            <button type="button" class="new-messages" id="newMessages" hidden>New messages</button>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-calls" aria-labelledby="tab-calls" hidden>
+            <div class="list" id="callsOpen"></div>
+            <p class="list-empty" id="callsEmpty">No open calls right now.</p>
+            <h3 class="list-heading" id="callsDoneHeading" hidden>Completed</h3>
+            <div class="list" id="callsDone"></div>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-fleet" aria-labelledby="tab-fleet" hidden>
+            <div class="list" id="fleetList"></div>
+          </div>
+
+          <div class="tabpanel" role="tabpanel" id="panel-hospitals" aria-labelledby="tab-hospitals" hidden>
+            <div class="list" id="hospitalList"></div>
+            <p class="footnote">Capabilities are simplified for this simulation.</p>
+          </div>
+        </section>
+      </aside>
+    </main>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/llm.js"></script>
+  <script src="js/agents.js"></script>
+  <script src="js/sim.js"></script>
+  <script src="js/map.js"></script>
+  <script src="js/drag.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>

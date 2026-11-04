@@ -1,0 +1,324 @@
+.bl-map {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: grab;
+  background: var(--land);
+}
+
+.bl-map.is-dragging { cursor: grabbing; }
+.bl-map.is-placing,
+.bl-map.is-placing [data-kind] { cursor: crosshair; }
+.bl-map [data-kind] { cursor: pointer; }
+
+.layer-land,
+.layer-wiesn,
+.layer-parks,
+.layer-river,
+.layer-buildings,
+.layer-crowds,
+.layer-casings,
+.layer-fills,
+.layer-traffic,
+.layer-closures,
+.layer-routes,
+.layer-labels { pointer-events: none; }
+.layer-land { pointer-events: auto; }
+
+.land { fill: var(--land); transition: fill 0.8s ease; }
+.wiesn-ground { fill: #F3E7C9; stroke: #E5D3A6; stroke-width: 18; }
+.wiesn-inner { fill: #F7EED8; }
+
+.park { fill: var(--park); stroke: #A9D58E; stroke-width: 22; stroke-linejoin: round; transition: fill 0.8s ease; }
+.lake { fill: var(--water); stroke: var(--water-bank); stroke-width: 30; }
+.tree-shadow { fill: rgba(21, 33, 58, 0.1); }
+.tree-dark { fill: var(--tree-dark); }
+.tree-light { fill: var(--tree); }
+
+.river-bank,
+.river-water,
+.river-shimmer { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.river-bank { stroke: var(--water-bank); }
+.river-water { stroke: var(--water); }
+.river-shimmer { stroke: rgba(255, 255, 255, 0.55); stroke-width: 1.4; stroke-dasharray: 6 14; }
+
+.bld-shadow { fill: rgba(21, 33, 58, 0.11); }
+.bld { stroke-width: 0.8; stroke-linejoin: round; }
+.bld-0 { fill: #F8DCC8; stroke: #E8C3A8; }
+.bld-1 { fill: #FBE9B9; stroke: #EBD391; }
+.bld-2 { fill: #DCE8F8; stroke: #BFD2EC; }
+.bld-3 { fill: #EADFF6; stroke: #D3C3EA; }
+.bld-4 { fill: #F7D6DF; stroke: #E8B9C6; }
+.bld-5 { fill: #DDF0E2; stroke: #BCDDC6; }
+
+.road-case,
+.road-fill,
+.road-centre,
+.tf,
+.closure-base,
+.closure-dash { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.road-case-local,
+.road-case-art { stroke: var(--road-case); }
+.road-case-ring { stroke: var(--ring-case); }
+.road-case-hwy { stroke: var(--hwy-case); }
+.road-case-art.road-case-bridge { stroke: #AEB8A0; }
+.road-case-ring.road-case-bridge { stroke: #C99F38; }
+.road-fill-local,
+.road-fill-art { stroke: var(--road); }
+.road-fill-ring { stroke: var(--ring); }
+.road-fill-hwy { stroke: var(--hwy); }
+.road-centre { stroke: rgba(255, 255, 255, 0.9); stroke-dasharray: 5 6; }
+
+.tf { stroke: transparent; opacity: 0.9; }
+.tf-0 { stroke: var(--p-green); opacity: 0.55; }
+.tf-1 { stroke: var(--p-yellow); }
+.tf-2 { stroke: var(--p-orange); }
+.tf-3 { stroke: var(--p-red); }
+
+.closure-base { stroke: var(--p-red); }
+.closure-dash { stroke: #FFFFFF; stroke-dasharray: 6 7; stroke-linecap: butt; }
+
+.crowd-heat { fill: var(--crowd, #F07A1B); opacity: 0.28; }
+.crowd-heat-outer { opacity: 0.12; }
+.bl-map[data-scenario="marathon"] { --crowd: #2160E8; }
+.bl-map[data-scenario="christmas"] { --crowd: #D9467C; }
+.bl-map[data-scenario="match"] { --crowd: #E23D3D; }
+.bl-map[data-scenario="wiesn"] { --crowd: #F07A1B; }
+.crowd-heat { animation: bl-breathe 3.2s ease-in-out infinite; }
+.crowd-pill { fill: var(--paper); stroke: var(--crowd, #F07A1B); stroke-width: 1.5; }
+.crowd-text {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  fill: var(--ink);
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.decor { pointer-events: none; }
+
+.route-track,
+.route-dash,
+.preview-glow,
+.preview-line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.route-track { stroke-width: 6; opacity: 0.2; }
+.route-dash { stroke-width: 3.5; stroke-dasharray: 7 7; animation: bl-dash-flow 0.8s linear infinite; }
+.route-track.to-scene,
+.route-dash.to-scene { stroke: var(--s-scene); }
+.route-track.to-hosp,
+.route-dash.to-hosp { stroke: var(--s-hosp); }
+.preview-glow { stroke-width: 16; opacity: 0.22; animation: bl-breathe 1.6s ease-in-out infinite; }
+.preview-line { stroke-width: 5.5; }
+.preview-scene { stroke: var(--s-scene); }
+.preview-hosp { stroke: var(--s-hosp); }
+.preview-ring { pointer-events: none; }
+.preview-ring-line { fill: none; stroke: var(--s-hosp); stroke-width: 3; }
+.preview-ring-pulse {
+  fill: var(--s-hosp);
+  opacity: 0.25;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bl-ripple 1.6s ease-out infinite;
+}
+
+.map-label {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 600;
+  text-anchor: middle;
+  dominant-baseline: central;
+  stroke: #FFFFFF;
+  stroke-width: 3px;
+  stroke-linejoin: round;
+  paint-order: stroke;
+}
+.hood-label { fill: var(--ink-2); opacity: 0.85; letter-spacing: 0.02em; }
+
+.lm-art > * { stroke: rgba(21, 33, 58, 0.3); stroke-width: 0.7; stroke-linejoin: round; }
+.lm-art > .lm-shadow,
+.lm-shadow { fill: rgba(21, 33, 58, 0.13); stroke: none; }
+.arena-shell { fill: #F4F7FB; transition: fill 0.4s ease; }
+.arena-quilt { fill: none; stroke: #C2CDDD; stroke-width: 3.2; stroke-dasharray: 3 2; }
+.lm-art > .arena-glow { fill: var(--p-red); stroke: none; opacity: 0; }
+.landmark-arena.is-match .arena-shell { fill: var(--p-red); }
+.landmark-arena.is-match .arena-quilt { stroke: #FF9A9A; }
+.landmark-arena.is-match .arena-glow { animation: bl-glow 1.4s ease-in-out infinite; }
+.wheel { transform-box: fill-box; transform-origin: center; animation: bl-spin 14s linear infinite; }
+
+.icon-shadow { fill: rgba(21, 33, 58, 0.16); }
+.hosp-box { fill: var(--paper); stroke: var(--line); stroke-width: 1; }
+.hosp-cross { fill: var(--p-red); }
+.hosp-bar-bg { fill: var(--line); }
+.hosp-bar { fill: var(--p-green); }
+.hosp-bar[data-level="busy"] { fill: var(--p-orange); }
+.hosp-bar[data-level="full"] { fill: var(--p-red); }
+
+.station-wall { fill: var(--paper); stroke: #9AA6BC; stroke-width: 0.8; }
+.station-roof { fill: var(--p-red); stroke: #B92E2E; stroke-width: 0.8; stroke-linejoin: round; }
+.station-door { fill: var(--line); }
+.station-door-lines { stroke: #AAB5C7; stroke-width: 0.8; fill: none; }
+
+.acc-sign { fill: #FFD43B; stroke: var(--ink); stroke-width: 1.6; stroke-linejoin: round; }
+.acc-mark { fill: var(--ink); }
+.acc-halo {
+  fill: var(--p-red);
+  opacity: 0.3;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: bl-ripple 1.3s ease-out infinite;
+}
+.acc-art { transform-box: fill-box; transform-origin: center; animation: bl-bob 1.3s ease-in-out infinite; }
+
+.pin-art { transform-origin: 0 0; transition: transform 0.2s ease; }
+.patient.is-highlight .pin-art { transform: scale(1.35); }
+.pin-ground { fill: rgba(21, 33, 58, 0.22); }
+.pin-body { fill: var(--pin, var(--muted)); stroke: #FFFFFF; stroke-width: 2.5; stroke-linejoin: round; }
+.patient.is-highlight .pin-body { stroke: var(--ink); }
+.patient[data-cat="RED"] { --pin: var(--p-red); }
+.patient[data-cat="ORANGE"] { --pin: var(--p-orange); }
+.patient[data-cat="YELLOW"] { --pin: var(--p-yellow); }
+.patient[data-cat="GREEN"] { --pin: var(--p-green); }
+.pin-emoji { font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+.pin-halo,
+.pin-ripple {
+  fill: var(--pin, var(--muted));
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.pin-halo { opacity: 0.3; animation: bl-ripple 2s ease-out infinite; }
+.pin-ripple { display: none; fill: none; stroke: var(--pin, var(--muted)); stroke-width: 3; }
+.patient.is-pending .pin-ripple { display: inline; animation: bl-ripple-strong 1.1s ease-out infinite; }
+.patient.is-pending .pin-ripple-late { animation-delay: 0.55s; }
+
+.amb-shadow rect { fill: rgba(21, 33, 58, 0.22); }
+.amb-hull { fill: #FFFFFF; stroke: #B9C3D3; stroke-width: 0.9; }
+.amb-stripe { fill: var(--p-red); }
+.amb-cab { fill: #D6DEEA; }
+.amb-glass { fill: #3B4C70; }
+.amb-cross { fill: var(--p-red); }
+.amb-light-blue { fill: #9DB6EE; }
+.amb-light-red { fill: #F1A9A9; }
+.amb-glow { opacity: 0; }
+.amb-glow-blue { fill: var(--signal); }
+.amb-glow-red { fill: var(--p-red); }
+.amb.is-siren .amb-light-blue { fill: var(--signal); animation: bl-blink 0.6s steps(1) infinite; }
+.amb.is-siren .amb-light-red { fill: var(--p-red); animation: bl-blink 0.6s steps(1) infinite 0.3s; }
+.amb.is-siren .amb-glow-blue { animation: bl-flash 0.6s steps(1) infinite; }
+.amb.is-siren .amb-glow-red { animation: bl-flash 0.6s steps(1) infinite 0.3s; }
+.amb-tag-bg { fill: var(--tag, var(--s-idle)); stroke: #FFFFFF; stroke-width: 1.5; }
+.amb-tag-text {
+  font-family: var(--font-display);
+  font-size: 9.5px;
+  font-weight: 700;
+  fill: #FFFFFF;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+.amb[data-state="idle"] { --tag: var(--s-idle); }
+.amb[data-state="toScene"] { --tag: var(--s-scene); }
+.amb[data-state="onScene"] { --tag: var(--s-onscene); }
+.amb[data-state="toHospital"] { --tag: var(--s-hosp); }
+.amb[data-state="handover"] { --tag: var(--s-hand); }
+.amb[data-state="returning"] { --tag: var(--s-return); }
+.amb.is-chosen .amb-hull { stroke: var(--signal); stroke-width: 2.4; }
+
+.bl-map.is-snow .land { fill: #F4F7FA; }
+.bl-map.is-snow .park { fill: #E3EFE0; stroke: #D3E6CF; }
+.bl-map.is-snow .tree-light { fill: #E9F3EA; }
+
+.map-tooltip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 6;
+  max-width: 240px;
+  padding: 8px 11px;
+  border-radius: 10px;
+  background: var(--paper);
+  color: var(--ink-2);
+  box-shadow: 0 6px 20px rgba(21, 33, 58, 0.16), 0 0 0 1px var(--line);
+  font-family: var(--font-body);
+  font-size: 12px;
+  line-height: 1.4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+.map-tooltip.is-on { opacity: 1; }
+.map-tooltip-title { font-family: var(--font-display); font-weight: 600; font-size: 13px; color: var(--ink); margin-bottom: 2px; }
+
+.map-zoom {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  border-radius: 12px;
+  background: var(--paper);
+  box-shadow: 0 4px 14px rgba(21, 33, 58, 0.14), 0 0 0 1px var(--line);
+  overflow: hidden;
+}
+.map-zoom-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+.map-zoom-btn:last-child { border-bottom: 0; }
+.map-zoom-btn:hover { background: var(--signal-soft); color: var(--signal); }
+.map-zoom-btn:focus-visible { outline: 2px solid var(--signal); outline-offset: -2px; }
+
+.map-snow {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.8s ease;
+  overflow: hidden;
+}
+.map-snow.is-on { opacity: 1; }
+.map-snow::before,
+.map-snow::after {
+  content: "";
+  position: absolute;
+  inset: -200px 0 0 0;
+  background-image:
+    radial-gradient(circle, rgba(255, 255, 255, 0.95) 1.6px, transparent 2.2px),
+    radial-gradient(circle, rgba(255, 255, 255, 0.8) 1.1px, transparent 1.6px);
+  background-size: 90px 90px, 55px 55px;
+  background-position: 0 0, 25px 35px;
+  filter: drop-shadow(0 0 1px rgba(122, 135, 161, 0.5));
+  animation: bl-snow 9s linear infinite;
+}
+.map-snow::after { background-size: 130px 130px, 70px 70px; animation-duration: 14s; opacity: 0.7; }
+
+@keyframes bl-dash-flow { to { stroke-dashoffset: -14; } }
+@keyframes bl-ripple { from { transform: scale(1); opacity: 0.35; } to { transform: scale(2.3); opacity: 0; } }
+@keyframes bl-ripple-strong { from { transform: scale(1); opacity: 0.9; } to { transform: scale(2.8); opacity: 0; } }
+@keyframes bl-breathe { 0%, 100% { opacity: 0.18; } 50% { opacity: 0.34; } }
+@keyframes bl-glow { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.55; } }
+@keyframes bl-blink { 0% { opacity: 1; } 50% { opacity: 0.25; } }
+@keyframes bl-flash { 0% { opacity: 0.32; } 50% { opacity: 0; } }
+@keyframes bl-spin { to { transform: rotate(360deg); } }
+@keyframes bl-bob { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+@keyframes bl-snow { from { transform: translateY(0); } to { transform: translateY(200px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .bl-map *,
+  .map-snow::before,
+  .map-snow::after { animation: none !important; transition: none !important; }
+  .amb.is-siren .amb-glow-blue { opacity: 0.25; }
+}
