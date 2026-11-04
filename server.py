@@ -27,6 +27,7 @@ PORT = int(os.environ.get("PORT", "8800"))
 MAX_BODY_BYTES = 64_000
 PUBLIC_FILES = {"/", "/index.html"}
 PUBLIC_DIRS = ("/js/", "/css/")
+CONFIG_PATH = "/js/config.js"
 
 TRIAGE_SYSTEM = (
     "You are the triage agent in a Munich ambulance dispatch centre. "
@@ -106,6 +107,13 @@ def ask_model(client: anthropic.Anthropic, system: str, schema: dict[str, Any], 
     return json.loads(text)
 
 
+class AppServer(ThreadingHTTPServer):
+    """Threaded server with a listen queue long enough for a browser loading every script at once."""
+
+    request_queue_size = 64
+    daemon_threads = True
+
+
 class AppHandler(SimpleHTTPRequestHandler):
     """Serves the app files and the two agent endpoints."""
 
@@ -132,11 +140,29 @@ class AppHandler(SimpleHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
         super().end_headers()
 
+    def status(self) -> dict[str, Any]:
+        """Return whether the model agents are on, and which model they use."""
+        return {"enabled": self.client is not None, "model": MODEL, "label": model_label(MODEL)}
+
+    def send_config(self) -> None:
+        """Answer js/config.js with a version that tells the page this server is running."""
+        config = {"modelServer": True, **self.status()}
+        script = f"'use strict';\nwindow.BL = window.BL || {{}};\nwindow.BL.serverConfig = {json.dumps(config)};\n"
+        body = script.encode("utf-8")
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", "text/javascript; charset=utf-8")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
     def do_GET(self) -> None:
-        """Answer the status endpoint or serve a static file."""
-        if self.path == "/api/llm/status":
-            status = {"enabled": self.client is not None, "model": MODEL, "label": model_label(MODEL)}
-            self.send_json(HTTPStatus.OK, status)
+        """Answer the status and config endpoints or serve a public app file."""
+        path = self.path.split("?", 1)[0]
+        if path == "/api/llm/status":
+            self.send_json(HTTPStatus.OK, self.status())
+            return
+        if path == CONFIG_PATH:
+            self.send_config()
             return
         if not self.is_public():
             self.send_json(HTTPStatus.NOT_FOUND, {"error": "Not found."})
@@ -200,7 +226,7 @@ def main() -> None:
     """Start the server, with the model agents enabled when an API key is present."""
     AppHandler.client = anthropic.Anthropic(timeout=30.0, max_retries=1) if has_credentials() else None
     mode = f"{model_label(MODEL)} agents on ({MODEL})" if AppHandler.client else "rules only, set ANTHROPIC_API_KEY in .env"
-    server = ThreadingHTTPServer((HOST, PORT), partial(AppHandler, directory=str(ROOT)))
+    server = AppServer((HOST, PORT), partial(AppHandler, directory=str(ROOT)))
     print(f"Blaulicht München on http://{HOST}:{PORT} ({mode})")
     try:
         server.serve_forever()

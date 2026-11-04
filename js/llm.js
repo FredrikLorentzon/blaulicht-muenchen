@@ -2,8 +2,9 @@
 
 /*
  * Client for the Claude powered agents served by server.py.
- * Without that server (a static host, or no API key) it stays disabled and
- * the agents run on their rules alone.
+ * The page learns from js/config.js whether server.py is serving it and has
+ * an API key. Opened as a file or on another static server, the client stays
+ * disabled and the agents run on their rules alone.
  */
 window.BL = window.BL || {};
 
@@ -29,17 +30,11 @@ window.BL = window.BL || {};
     llm.listeners.forEach((fn) => fn(llm));
   }
 
-  async function init() {
-    try {
-      const response = await fetch('/api/llm/status', { cache: 'no-store' });
-      if (!response.ok) return;
-      const status = await response.json();
-      llm.enabled = Boolean(status.enabled);
-      llm.model = status.model || null;
-      llm.label = status.label || 'Claude';
-    } catch (error) {
-      llm.enabled = false;
-    }
+  function init() {
+    const config = BL.serverConfig || {};
+    llm.enabled = Boolean(config.modelServer && config.enabled);
+    llm.model = config.model || null;
+    llm.label = config.label || 'Claude';
     notify();
   }
 

@@ -239,3 +239,14 @@ Helpers: `BL.scenarioEdgeEffect(def, edge)` returns `{ load, closed }`. `BL.CLOS
 - Map: draw scenario crowds as soft translucent heat circles (radius from the data, colour by scenario) with a constant size label "25,000 people" and the crowd name in the tooltip. Draw closed roads as a red and white dashed overlay with small barrier icons at their midpoints. Arena glows when `match`, Wiesn tents and Ferris wheel when `wiesn`, small Christmas trees and market stalls at the crowd points when `christmas`, a finish arch at the first marathon crowd when `marathon`. Snow overlay from `sim.scenario.snow`.
 - UI: replace the three scenario toggles with a "Scenario" picker button showing the active scenario icon and name. It opens a popover with one card per scenario: icon, name, tagline, and three facts (people from `def.people` formatted with thousands separators, closed roads count from `def.closures.size`, call volume `×1.3`), plus the typical start time. Selecting calls `sim.setScenario(id)`. Keep a separate "Snowfall" toggle (`sim.setSnow`) and the "Crash on the Ring" button.
 
+
+## Change 2: Claude powered agents (optional)
+
+The app runs in two modes. Rules mode needs no server code: open `index.html` as a file or on any static server. Model mode needs `server.py` and an `ANTHROPIC_API_KEY` in `.env`.
+
+- `js/config.js` sets `BL.serverConfig = { modelServer: false, enabled: false, model: null, label: 'Claude' }`. `server.py` answers `/js/config.js` with `modelServer: true` and `enabled` set to whether a key is configured, plus `model` and a short `label` such as `Opus`.
+- `js/llm.js` exposes `BL.llm` with `enabled`, `model`, `label`, `pending`, `init()`, `onChange(fn)`, `triage(brief)` and `dispatch(brief)`. `init()` only reads `BL.serverConfig`, so rules mode makes no network requests. Each call has a 25 second timeout.
+- `server.py` serves `/`, `/index.html`, `/js/*` and `/css/*` only, answers `GET /api/llm/status`, and runs `POST /api/llm/triage` and `POST /api/llm/dispatch` against the model with a JSON schema for the answer, low effort and the server side refusal fallback.
+- Triage agent: after the rule verdict, `reviewWithModel(p)` posts the call to `BL.llm.triage`. The answer can change the colour. The difference to the rule score is kept as `p.modelAdjust`, so aging keeps working. The review is posted to the chat as "Opus review ...".
+- Coordinator: when there are at least two free units and no diversion, `decideWithModel(rec, units, hospitals)` sends the four best units and hospitals to `BL.llm.dispatch`, applies the chosen unit and hospital when they are still valid, and puts the model's reason first on the card. The recommendation is announced, and the auto approve countdown starts, only after the answer or the fallback.
+- Every model failure falls back to the rule decision. The badge in the top bar shows Rules or the model label and pulses while a call is pending.

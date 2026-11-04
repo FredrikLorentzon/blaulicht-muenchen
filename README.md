@@ -36,7 +36,21 @@ Snowfall works on top of any scenario, and **Crash on the Ring** puts an acciden
 
 ## Run it
 
-You need [uv](https://docs.astral.sh/uv/) and, to use Claude, an Anthropic API key.
+The app runs with or without a Claude API key. The badge next to the title shows which mode is active: **Rules** or **Opus**.
+
+### Without an API key
+
+Nothing to install. Open `index.html` in a browser, or serve the folder with any static web server:
+
+```bash
+python3 -m http.server 8800
+```
+
+Then open http://127.0.0.1:8800. All three agents run on their built in rules, and every feature of the simulation works.
+
+### With an API key
+
+The triage agent and the dispatch coordinator then ask Claude. You need [uv](https://docs.astral.sh/uv/).
 
 1. Create a file called `.env` next to `server.py`:
 
@@ -52,15 +66,15 @@ You need [uv](https://docs.astral.sh/uv/) and, to use Claude, an Anthropic API k
 
 3. Open http://127.0.0.1:8800.
 
-The badge next to the title shows **Opus** when the agents use Claude and **Rules** when they run on their built in rules. Without a key, the whole simulation works on rules alone.
-
-Optional settings in `.env`: `ANTHROPIC_MODEL` to use another model, for example `claude-haiku-5-5`, and `PORT` to change the port.
+Optional settings in `.env`: `ANTHROPIC_MODEL` to use another model, for example `claude-haiku-5-5`, and `PORT` to change the port. `server.py` also runs without a key, in rules mode.
 
 ## How Claude is used
 
 `server.py` calls `claude-opus-5-5` through the official Anthropic Python SDK with low effort, a JSON schema for the answer and the server side refusal fallback. Each decision takes about four seconds. When the model does not answer within 25 seconds or returns an error, the rules decide, so the simulation never stalls.
 
 The API key stays on the server and never reaches the browser. The server only serves `index.html`, `js/` and `css/`, so `.env` and the server code cannot be downloaded.
+
+The page finds out which mode to use from `js/config.js`. The file in the repository switches the model agents off. `server.py` answers the same path with a version that switches them on when a key is set, so the page never calls a model server that is not there.
 
 ## Controls
 
@@ -80,6 +94,7 @@ The API key stays on the server and never reaches the browser. The server only s
 | `server.py` | Serves the app and the triage and dispatch endpoints that call Claude |
 | `js/data.js` | Munich road network, hospitals, ambulance stations and scenarios |
 | `js/agents.js` | Routing and the triage, traffic and coordinator agents |
+| `js/config.js` | Runtime mode, rules only unless `server.py` serves the page |
 | `js/llm.js` | Browser client for the Claude endpoints |
 | `js/sim.js` | Calls, ambulance missions, the clock and the scenarios |
 | `js/map.js`, `js/drag.js` | The map, its animations and the draggable patient |
